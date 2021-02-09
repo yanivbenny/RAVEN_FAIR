@@ -155,99 +155,11 @@ def separate(args, all_configs):
             
             answer_AoT = copy.deepcopy(row_3_3)
             modifiable_attr = sample_attr_avail(rule_groups, answer_AoT)
-            candidates = [answer_AoT]
-            answers_imgs = [render_panel(answer_AoT)]
 
-            answer_score = solve(rule_groups, context, [answer_AoT])[0]
-            assert answer_score > 0
-            
             if not args.fair:
-                """Create the negative choices for the original RAVEN dataset"""
-                while len(candidates) < 8:
-                    component_idx, attr_name, min_level, max_level = sample_attr(modifiable_attr)
-                    new_answer = copy.deepcopy(answer_AoT)
-                    new_answer.sample_new(component_idx, attr_name, min_level, max_level, answer_AoT)
-
-                    new_answer_img = render_panel(new_answer)
-                    ok = True
-                    new_answer_score = solve(rule_groups, context, [new_answer])[0]
-                    if new_answer_score >= answer_score:
-                        print(
-                            f'Warning - Accidentally generated good answer {new_answer_score} >= {answer_score} - resampling')
-                        ok = False
-                    for i in range(0, len(answers_imgs)):
-                        if (new_answer_img == answers_imgs[i]).all():
-                            print(f'Warning - New answer equals image {i} - resampling')
-                            ok = False
-                    
-                    if ok:
-                        candidates.append(new_answer)
-                        answers_imgs.append(new_answer_img)
+                candidates, answers_imgs = original_raven(modifiable_attr, answer_AoT, rule_groups, context)
             else:
-                """Create the negative choices for the balanced RAVEN-FAIR dataset"""
-                attrs = [modifiable_attr]
-                idxs = []
-                blacklist = [[]]
-
-                try:
-                    while len(candidates) < 8:
-                        while True:
-                            indices = random.sample(range(len(candidates)), k=len(candidates))
-                            timeout_flag = False
-                            for idx in indices:
-                                if len(attrs[idx]) > 0:
-                                    timeout_flag = True
-                                    break
-                            if timeout_flag:
-                                break
-                                print('No option to continue')
-                            raise Exception('No option to continue')
-
-                        attr_i = attrs[idx]
-                        candidate_i = candidates[idx]
-                        blacklist_i = blacklist[idx]
-
-                        component_idx, attr_name, min_level, max_level = sample_attr(attr_i)
-                        try:
-                            with timeout(5):
-                                new_answer = copy.deepcopy(candidate_i)
-                                new_answer.sample_new(component_idx, attr_name, min_level, max_level, candidate_i)
-                                new_attr = sample_attr_avail(rule_groups, new_answer)
-                        except Exception as e:
-                            print('Attempt to sample failed - recovering')
-                            print(e)
-                            print(idxs)
-                            print(component_idx, attr_name, min_level, max_level)
-                            for attr in attr_i:
-                                print(attr)
-                            print(blacklist_i)
-                            continue
-
-                        new_blacklist = copy.deepcopy(blacklist_i) + [attr_name]
-                        for i in reversed(range(len(new_attr))):
-                            if new_attr[i][1] in new_blacklist:
-                                new_attr.pop(i)
-
-                        new_answer_img = render_panel(new_answer)
-                        ok = True
-                        new_answer_score = solve(rule_groups, context, [new_answer])[0]
-                        if new_answer_score >= answer_score:
-                            print(f'Warning - Accidentally generated good answer {new_answer_score} >= {answer_score} - resampling')
-                            ok = False
-                        for i in range(0,len(answers_imgs)):
-                            if (new_answer_img == answers_imgs[i]).all():
-                                print(f'Warning - New answer equals image {i} | {idxs} - resampling')
-                                ok = False
-                        if ok:
-                            idxs.append(idx)
-                            candidates.append(new_answer)
-                            attrs.append(new_attr)
-                            blacklist.append(new_blacklist)
-                            answers_imgs.append(new_answer_img)
-
-                except Exception as e:
-                    print(e)
-                    raise e
+                candidates, answers_imgs = fair_raven(modifiable_attr, answer_AoT, rule_groups, context)
 
             if args.save:
                 zipped = list(zip(candidates, answers_imgs))
@@ -272,6 +184,112 @@ def separate(args, all_configs):
                     f.write(dom)
 
 
+def original_raven(modifiable_attr, answer_AoT, rule_groups, context):
+    candidates = [answer_AoT]
+    answers_imgs = [render_panel(answer_AoT)]
+
+    answer_score = solve(rule_groups, context, [answer_AoT])[0]
+    assert answer_score > 0
+
+    """Create the negative choices for the original RAVEN dataset"""
+    while len(candidates) < 8:
+        component_idx, attr_name, min_level, max_level = sample_attr(modifiable_attr)
+        new_answer = copy.deepcopy(answer_AoT)
+        new_answer.sample_new(component_idx, attr_name, min_level, max_level, answer_AoT)
+
+        new_answer_img = render_panel(new_answer)
+        ok = True
+        new_answer_score = solve(rule_groups, context, [new_answer])[0]
+        if new_answer_score >= answer_score:
+            print(f'Warning - Accidentally generated good answer {new_answer_score} >= {answer_score} - resampling')
+            ok = False
+        for i in range(0, len(answers_imgs)):
+            if (new_answer_img == answers_imgs[i]).all():
+                print(f'Warning - New answer equals image {i} - resampling')
+                ok = False
+
+        if ok:
+            candidates.append(new_answer)
+            answers_imgs.append(new_answer_img)
+
+    return candidates, answers_imgs
+
+
+def fair_raven(modifiable_attr, answer_AoT, rule_groups, context):
+    candidates = [answer_AoT]
+    answers_imgs = [render_panel(answer_AoT)]
+
+    answer_score = solve(rule_groups, context, [answer_AoT])[0]
+    assert answer_score > 0
+
+    """Create the negative choices for the balanced RAVEN-FAIR dataset"""
+    attrs = [modifiable_attr]
+    idxs = []
+    blacklist = [[]]
+
+    try:
+        while len(candidates) < 8:
+            while True:
+                indices = random.sample(range(len(candidates)), k=len(candidates))
+                timeout_flag = False
+                for idx in indices:
+                    if len(attrs[idx]) > 0:
+                        timeout_flag = True
+                        break
+                if timeout_flag:
+                    break
+                    print('No option to continue')
+                raise Exception('No option to continue')
+
+            attr_i = attrs[idx]
+            candidate_i = candidates[idx]
+            blacklist_i = blacklist[idx]
+
+            component_idx, attr_name, min_level, max_level = sample_attr(attr_i)
+            try:
+                with timeout(5):
+                    new_answer = copy.deepcopy(candidate_i)
+                    new_answer.sample_new(component_idx, attr_name, min_level, max_level, candidate_i)
+                    new_attr = sample_attr_avail(rule_groups, new_answer)
+            except Exception as e:
+                print('Attempt to sample failed - recovering')
+                print(e)
+                print(idxs)
+                print(component_idx, attr_name, min_level, max_level)
+                for attr in attr_i:
+                    print(attr)
+                print(blacklist_i)
+                continue
+
+            new_blacklist = copy.deepcopy(blacklist_i) + [attr_name]
+            for i in reversed(range(len(new_attr))):
+                if new_attr[i][1] in new_blacklist:
+                    new_attr.pop(i)
+
+            new_answer_img = render_panel(new_answer)
+            ok = True
+            new_answer_score = solve(rule_groups, context, [new_answer])[0]
+            if new_answer_score >= answer_score:
+                print(f'Warning - Accidentally generated good answer {new_answer_score} >= {answer_score} - resampling')
+                ok = False
+            for i in range(0, len(answers_imgs)):
+                if (new_answer_img == answers_imgs[i]).all():
+                    print(f'Warning - New answer equals image {i} | {idxs} - resampling')
+                    ok = False
+            if ok:
+                idxs.append(idx)
+                candidates.append(new_answer)
+                attrs.append(new_attr)
+                blacklist.append(new_blacklist)
+                answers_imgs.append(new_answer_img)
+
+    except Exception as e:
+        print(e)
+        raise e
+
+    return candidates, answers_imgs
+
+
 def main():
     main_arg_parser = argparse.ArgumentParser(description="parser for RAVEN")
     main_arg_parser.add_argument("--num-samples", type=int, default=10000,
@@ -290,7 +308,7 @@ def main():
                                  help="save the dataset")
     args = main_arg_parser.parse_args()
 
-    args.save_dir = os.path.join(args.save_dir, 'RAVEN' + '-F' if args.fair else '')
+    args.save_dir = os.path.join(args.save_dir, 'RAVEN' + ('-F' if args.fair else ''))
 
     all_configs = {"center_single": build_center_single(),
                    "distribute_four": build_distribute_four(),
