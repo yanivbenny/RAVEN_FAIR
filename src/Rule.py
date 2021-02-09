@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 import copy
 
 import numpy as np
@@ -337,8 +340,8 @@ class Distribute_Three(Rule):
         second_layout = second_aot.children[0].children[self.component_idx].children[0]
         if self.attr == "Number":
             if self.count == 0:
-                all_value_levels = list(range(current_layout.layout_constraint["Number"][0],
-                                         current_layout.layout_constraint["Number"][1] + 1))
+                all_value_levels = range(current_layout.layout_constraint["Number"][0],
+                                         current_layout.layout_constraint["Number"][1] + 1)
                 current_value_level = current_layout.number.get_value_level()
                 idx = all_value_levels.index(current_value_level)
                 all_value_levels.pop(idx)

@@ -5,13 +5,13 @@ Balanced RAVEN dataset from the paper: 'Scale-Localized Abstract Reasoning'.
 
 ## Requirements
 Tested on both linux and windows 10.
-* python 3.6
-* eventlet
+* python 2.7
+* eventlet (windows)
 * tqdm
-* numpy
-* scipy
-* opencv-python
-* pillow
+* numpy=1.16.6
+* scipy=1.2.3
+* opencv-python=4.2.0.32
+* pillow=6.2.2
 
 
 ## Generating the dataset

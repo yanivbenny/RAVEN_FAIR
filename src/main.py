@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 import argparse
 import copy
 import os
@@ -168,7 +171,7 @@ def separate(args, all_configs):
 
                 image = imgs[0:8] + list(answers_imgs)
                 target = candidates.index(answer_AoT)
-                predicted = solve(rule_groups, context, candidates)[1]
+                _, predicted = solve(rule_groups, context, candidates)
                 meta_matrix, meta_target = serialize_rules(rule_groups)
                 structure, meta_structure = serialize_aot(start_node)
                 np.savez_compressed("{}/{}/RAVEN_{}_{}.npz".format(args.save_dir, key, k, set_name), image=image,
@@ -188,7 +191,7 @@ def original_raven(modifiable_attr, answer_AoT, rule_groups, context):
     candidates = [answer_AoT]
     answers_imgs = [render_panel(answer_AoT)]
 
-    answer_score = solve(rule_groups, context, [answer_AoT])[0]
+    answer_score, _ = solve(rule_groups, context, [answer_AoT])
     assert answer_score > 0
 
     """Create the negative choices for the original RAVEN dataset"""
@@ -199,13 +202,13 @@ def original_raven(modifiable_attr, answer_AoT, rule_groups, context):
 
         new_answer_img = render_panel(new_answer)
         ok = True
-        new_answer_score = solve(rule_groups, context, [new_answer])[0]
+        new_answer_score, _ = solve(rule_groups, context, [new_answer])
         if new_answer_score >= answer_score:
-            print(f'Warning - Accidentally generated good answer {new_answer_score} >= {answer_score} - resampling')
+            print 'Warning - Accidentally generated good answer - resampling'
             ok = False
         for i in range(0, len(answers_imgs)):
             if (new_answer_img == answers_imgs[i]).all():
-                print(f'Warning - New answer equals image {i} - resampling')
+                print 'Warning - New answer equals existing image - resampling'
                 ok = False
 
         if ok:
@@ -219,7 +222,7 @@ def fair_raven(modifiable_attr, answer_AoT, rule_groups, context):
     candidates = [answer_AoT]
     answers_imgs = [render_panel(answer_AoT)]
 
-    answer_score = solve(rule_groups, context, [answer_AoT])[0]
+    answer_score, _ = solve(rule_groups, context, [answer_AoT])
     assert answer_score > 0
 
     """Create the negative choices for the balanced RAVEN-FAIR dataset"""
@@ -238,7 +241,7 @@ def fair_raven(modifiable_attr, answer_AoT, rule_groups, context):
                         break
                 if timeout_flag:
                     break
-                    print('No option to continue')
+                    print 'No option to continue'
                 raise Exception('No option to continue')
 
             attr_i = attrs[idx]
@@ -252,7 +255,7 @@ def fair_raven(modifiable_attr, answer_AoT, rule_groups, context):
                     new_answer.sample_new(component_idx, attr_name, min_level, max_level, candidate_i)
                     new_attr = sample_attr_avail(rule_groups, new_answer)
             except Exception as e:
-                print('Attempt to sample failed - recovering')
+                print 'Attempt to sample failed - recovering'
                 print(e)
                 print(idxs)
                 print(component_idx, attr_name, min_level, max_level)
@@ -268,13 +271,13 @@ def fair_raven(modifiable_attr, answer_AoT, rule_groups, context):
 
             new_answer_img = render_panel(new_answer)
             ok = True
-            new_answer_score = solve(rule_groups, context, [new_answer])[0]
+            new_answer_score, _ = solve(rule_groups, context, [new_answer])
             if new_answer_score >= answer_score:
-                print(f'Warning - Accidentally generated good answer {new_answer_score} >= {answer_score} - resampling')
+                print 'Warning - Accidentally generated good answer - resampling'
                 ok = False
             for i in range(0, len(answers_imgs)):
                 if (new_answer_img == answers_imgs[i]).all():
-                    print(f'Warning - New answer equals image {i} | {idxs} - resampling')
+                    print 'Warning - New answer equals existing image - resampling'
                     ok = False
             if ok:
                 idxs.append(idx)

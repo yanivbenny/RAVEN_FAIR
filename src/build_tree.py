@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 from AoT import Component, Layout, Root, Structure
 from constraints import (gen_entity_constraint, gen_layout_constraint,
                          rule_constraint)

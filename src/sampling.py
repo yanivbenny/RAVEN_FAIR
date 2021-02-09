@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 import numpy as np
 try:
     from scipy.misc import comb
@@ -23,7 +26,7 @@ def sample_rules():
     return all_rules
 
 # pay attention to Position Arithmetic, new entities (resample)
-def sample_attr_avail(rule_groups, row_3_3, N=1):
+def sample_attr_avail(rule_groups, row_3_3):
     """Sample available attributes whose values could be modified.
     Arguments:
         rule_groups(list of list of Rule): a list of rules to apply to the component

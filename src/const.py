@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 # Maximum number of components in a RPM
 MAX_COMPONENTS = 2
 

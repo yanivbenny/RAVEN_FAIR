@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 import numpy as np
 
 
@@ -31,7 +34,7 @@ def solve(rule_groups, context, candidates):
             satisfied[i] += check_entity(rule_color, context, candidate, "Color", regenerate)
     satisfied = np.array(satisfied)
     return satisfied, np.where(satisfied == max(satisfied))[0]
-    answer_set = np.where(satisfied == max(satisfied))[0]
+    # answer_set = np.where(satisfied == max(satisfied))[0]
     # return np.random.choice(answer_set)
 
 
