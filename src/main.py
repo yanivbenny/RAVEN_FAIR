@@ -5,7 +5,7 @@ import random
 import sys
 
 import numpy as np
-from tqdm import trange
+from tqdm import tqdm
 
 from build_tree import (build_center_single, build_distribute_four,
                         build_distribute_nine,
@@ -21,7 +21,30 @@ from sampling import sample_attr, sample_attr_avail, sample_rules
 from serialize import dom_problem, serialize_aot, serialize_rules
 from solver import solve
 
-from eventlet.timeout import Timeout
+import time
+if os.name == 'nt':
+    from eventlet.timeout import Timeout as timeout
+else:
+    import signal
+    from contextlib import contextmanager
+
+
+    def raise_timeout(signum, frame):
+        raise TimeoutError
+
+
+    @contextmanager
+    def timeout(time):
+        # Register a function to raise a TimeoutError on the signal.
+        signal.signal(signal.SIGALRM, raise_timeout)
+        # Schedule the signal to be sent after ``time``.
+        signal.alarm(time)
+
+        try:
+            yield
+        except Exception as e:
+            raise e
+            signal.signal(signal.SIGALRM, signal.SIG_IGN)
 
 
 def merge_component(dst_aot, src_aot, component_idx):
@@ -41,7 +64,8 @@ def separate(args, all_configs):
     np.random.seed(args.seed)
 
     for key in all_configs.keys():
-        for k in trange(args.num_samples):
+        acc = 0
+        for k in tqdm(range(args.num_samples), key):
             count_num = k % 10
             if count_num < (10 - args.val - args.test):
                 set_name = "train"
@@ -185,7 +209,7 @@ def separate(args, all_configs):
 
                         component_idx, attr_name, min_level, max_level = sample_attr(attr_i)
                         try:
-                            with Timeout(5):
+                            with timeout(5):
                                 new_answer = copy.deepcopy(candidate_i)
                                 new_answer.sample_new(component_idx, attr_name, min_level, max_level, candidate_i)
                                 new_attr = sample_attr_avail(rule_groups, new_answer)
@@ -243,10 +267,14 @@ def separate(args, all_configs):
                                     structure=structure,
                                     meta_structure=meta_structure)
 
+                with open("{}/{}/RAVEN_{}_{}.xml".format(args.save_dir, key, k, set_name), "w") as f:
+                    dom = dom_problem(context + list(candidates), rule_groups)
+                    f.write(dom)
+
 
 def main():
     main_arg_parser = argparse.ArgumentParser(description="parser for RAVEN")
-    main_arg_parser.add_argument("--num-samples", type=int, default=20000,
+    main_arg_parser.add_argument("--num-samples", type=int, default=10000,
                                  help="number of samples for each component configuration")
     main_arg_parser.add_argument("--save-dir", type=str, default="./Datasets",
                                  help="path to folder where the generated dataset will be saved.")
@@ -259,7 +287,7 @@ def main():
     main_arg_parser.add_argument("--test", type=float, default=2,
                                  help="the proportion of the size of test set")
     main_arg_parser.add_argument("--save", type=int, default=1,
-                                 help="do balanced dataset")
+                                 help="save the dataset")
     args = main_arg_parser.parse_args()
 
     args.save_dir = os.path.join(args.save_dir, 'RAVEN' + '-F' if args.fair else '')
