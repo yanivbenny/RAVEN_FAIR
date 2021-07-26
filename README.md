@@ -1,5 +1,5 @@
 # RAVEN-FAIR
-Balanced RAVEN dataset from the paper: 'Scale-Localized Abstract Reasoning'.
+Balanced RAVEN dataset from the paper: 'Scale-Localized Abstract Reasoning', presented at CVPR 2021.
 
 [Paper](https://github.com/yanivbenny/MRNet) [Code](https://github.com/yanivbenny/MRNet)
 
@@ -24,11 +24,26 @@ python main.py --fair FAIR --save-dir DEST
 
 Original RAVEN will be created at \<DEST\>/RAVEN.
 RAVEN-FAIR will be created at \<DEST\>/RAVEN-F. 
-## Downloading the dataset
-Upcoming.
 
 
 ## Acknowledgement
 We thank the original creators of the RAVEN dataset:
 Chi Zhang, Feng Gao, Baoxiong Jia, Yixin Zhu, Song-Chun Zhu.
 The original code can be found at the repository: [RAVEN](https://github.com/WellyZhang/RAVEN).
+
+
+## Citation
+We thank you for showing interest in our work. 
+If our work was beneficial for you, please consider citing us using:
+
+```
+@inproceedings{benny2021scale,
+  title={Scale-localized abstract reasoning},
+  author={Benny, Yaniv and Pekar, Niv and Wolf, Lior},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={12557--12565},
+  year={2021}
+}
+```
+
+If you have any question, please feel free to contact us.
