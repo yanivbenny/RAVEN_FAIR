@@ -1,7 +1,8 @@
 # RAVEN-FAIR
 Balanced RAVEN dataset from the paper: 'Scale-Localized Abstract Reasoning', presented at CVPR 2021.
 
-[Paper](https://github.com/yanivbenny/MRNet) [Code](https://github.com/yanivbenny/MRNet)
+[Paper](https://openaccess.thecvf.com/content/CVPR2021/papers/Benny_Scale-Localized_Abstract_Reasoning_CVPR_2021_paper.pdf) 
+[Code](https://github.com/yanivbenny/MRNet)
 
 ## Requirements
 Tested on both linux and windows 10.
